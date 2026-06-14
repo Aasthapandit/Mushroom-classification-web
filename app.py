@@ -1,47 +1,40 @@
-from flask import Flask, render_template, request
-
-app = Flask(__name__)
-
-# -----------------------------
-# HOME PAGE
-# -----------------------------
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-# -----------------------------
-# PREDICT ROUTE (RESUME SAFE VERSION)
-# -----------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # read form data (just to show input works)
         data = request.form
 
-        # simple demo logic (safe + stable)
+        # get user input
         odor = data.get("odor", "")
+        cap_color = data.get("cap_color", "")
+        population = data.get("population", "")
 
-        # fake ML behavior (resume demo)
+        # simple deterministic "ML-like" scoring
+        score = 50
+
         if odor == "foul":
+            score += 40
+        if cap_color == "green":
+            score += 10
+        if population == "several":
+            score += 5
+
+        # clamp score
+        if score > 99:
+            score = 99
+        if score < 5:
+            score = 5
+
+        # result logic
+        if score >= 50:
             result = "☠️ Poisonous Mushroom"
-            probability = 97.5
         else:
             result = "🍄 Edible Mushroom"
-            probability = 92.3
 
         return render_template(
             "index.html",
             prediction=result,
-            probability=f"{probability:.2f}%"
+            probability=f"{score:.2f}%"
         )
 
     except Exception as e:
         return f"ERROR: {str(e)}"
-
-
-# -----------------------------
-# RUN APP (IMPORTANT FOR RENDER)
-# -----------------------------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
