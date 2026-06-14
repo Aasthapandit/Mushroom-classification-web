@@ -83,13 +83,11 @@ def predict():
 
         transformed = np.asarray(transformed, dtype=np.float32)
 
-        print("TRANSFORMED SHAPE:", transformed.shape)
-        print("MODEL INPUT SHAPE:", model.input_shape)
+        prediction = model.predict(transformed, verbose=0)
 
         return f"""
-        <h2>MODEL CHECK</h2>
-        <p>Transformed Shape: {transformed.shape}</p>
-        <p>Model Input Shape: {model.input_shape}</p>
+        <h2>PREDICTION SUCCESS</h2>
+        <p>Raw Output: {prediction}</p>
         """
 
     except Exception as e:
