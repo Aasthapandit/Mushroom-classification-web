@@ -2,10 +2,13 @@ from flask import Flask, render_template, request
 import pandas as pd
 import numpy as np
 import pickle
+from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
-# LOAD PCA + OHE ONLY
+# LOAD MODEL
+model = load_model("mushroom_pca_model.h5")
+
 with open("pca_model.pkl", "rb") as f:
     pca = pickle.load(f)
 
@@ -80,10 +83,13 @@ def predict():
 
         transformed = np.asarray(transformed, dtype=np.float32)
 
+        print("TRANSFORMED SHAPE:", transformed.shape)
+        print("MODEL INPUT SHAPE:", model.input_shape)
+
         return f"""
-        <h2>TEST SUCCESS</h2>
-        <p>Encoded Shape: {encoded.shape}</p>
+        <h2>MODEL CHECK</h2>
         <p>Transformed Shape: {transformed.shape}</p>
+        <p>Model Input Shape: {model.input_shape}</p>
         """
 
     except Exception as e:
