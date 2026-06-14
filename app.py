@@ -1,25 +1,6 @@
 from flask import Flask, render_template, request
-import pandas as pd
-import numpy as np
-import pickle
-from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
-
-# -----------------------------
-# LOAD MODELS (ONLY ONCE)
-# -----------------------------
-print("Loading models...")
-
-model = load_model("mushroom_pca_model.h5")
-
-with open("pca_model.pkl", "rb") as f:
-    pca = pickle.load(f)
-
-with open("ohe.pkl", "rb") as f:
-    ohe = pickle.load(f)
-
-print("Models loaded successfully")
 
 # -----------------------------
 # HOME
@@ -30,60 +11,13 @@ def home():
 
 
 # -----------------------------
-# PREDICT
+# SAFE PREDICT (NO MODEL LOAD)
 # -----------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-
-        features = [
-            request.form["cap_shape"],
-            request.form["cap_surface"],
-            request.form["cap_color"],
-            request.form["bruises"],
-            request.form["odor"],
-            request.form["gill_attachment"],
-            request.form["gill_spacing"],
-            request.form["gill_size"],
-            request.form["gill_color"],
-            request.form["stalk_shape"],
-            request.form["stalk_root"],
-            request.form["stalk_surface_above_ring"],
-            request.form["stalk_surface_below_ring"],
-            request.form["stalk_color_above_ring"],
-            request.form["stalk_color_below_ring"],
-            request.form["veil_type"],
-            request.form["veil_color"],
-            request.form["ring_number"],
-            request.form["ring_type"],
-            request.form["spore_print_color"],
-            request.form["population"],
-            request.form["habitat"]
-        ]
-
-        columns = [
-            'cap-shape','cap-surface','cap-color','bruises','odor',
-            'gill-attachment','gill-spacing','gill-size','gill-color',
-            'stalk-shape','stalk-root','stalk-surface-above-ring',
-            'stalk-surface-below-ring','stalk-color-above-ring',
-            'stalk-color-below-ring','veil-type','veil-color',
-            'ring-number','ring-type','spore-print-color',
-            'population','habitat'
-        ]
-
-        input_df = pd.DataFrame([features], columns=columns)
-
-        # Encoding
-        encoded = ohe.transform(input_df).toarray()
-
-        # PCA
-        transformed = pca.transform(encoded)
-        transformed = np.asarray(transformed, dtype=np.float32)
-
-        # Prediction
-        prediction = model.predict(transformed)
-
-        probability = float(prediction[0][0]) * 100
+        # TEMP SAFE OUTPUT (to confirm Render is stable)
+        probability = 95.0
 
         if probability >= 50:
             result = "☠️ Poisonous Mushroom"
@@ -97,7 +31,7 @@ def predict():
         )
 
     except Exception as e:
-        return f"ERROR IN PREDICT: {str(e)}"
+        return f"ERROR: {str(e)}"
 
 
 # -----------------------------
