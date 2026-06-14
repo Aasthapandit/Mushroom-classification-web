@@ -10,18 +10,11 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # TEMP TEST ONLY (no ML)
-        probability = 95.0
-
-        if probability >= 50:
-            result = "☠️ Poisonous Mushroom"
-        else:
-            result = "🍄 Edible Mushroom"
-
+        # SAFE TEST RESPONSE
         return render_template(
             "index.html",
-            prediction=result,
-            probability=f"{probability:.2f}%"
+            prediction="🍄 App Working (No ML yet)",
+            probability="95.00%"
         )
 
     except Exception as e:
