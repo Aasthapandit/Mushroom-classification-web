@@ -4,9 +4,14 @@ import numpy as np
 import pickle
 from tensorflow.keras.models import load_model
 
+# -----------------------------
+# APP INIT
+# -----------------------------
 app = Flask(__name__)
 
-# LOAD MODEL
+# -----------------------------
+# LOAD MODELS
+# -----------------------------
 model = load_model("mushroom_pca_model.h5")
 
 with open("pca_model.pkl", "rb") as f:
@@ -15,16 +20,22 @@ with open("pca_model.pkl", "rb") as f:
 with open("ohe.pkl", "rb") as f:
     ohe = pickle.load(f)
 
-
+# -----------------------------
+# HOME ROUTE
+# -----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
-
+# -----------------------------
+# PREDICT ROUTE
+# -----------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-
+        # -----------------------------
+        # GET INPUTS
+        # -----------------------------
         features = [
             request.form["cap_shape"],
             request.form["cap_surface"],
@@ -51,48 +62,65 @@ def predict():
         ]
 
         columns = [
-            'cap-shape',
-            'cap-surface',
-            'cap-color',
-            'bruises',
-            'odor',
-            'gill-attachment',
-            'gill-spacing',
-            'gill-size',
-            'gill-color',
-            'stalk-shape',
-            'stalk-root',
-            'stalk-surface-above-ring',
-            'stalk-surface-below-ring',
-            'stalk-color-above-ring',
-            'stalk-color-below-ring',
-            'veil-type',
-            'veil-color',
-            'ring-number',
-            'ring-type',
-            'spore-print-color',
-            'population',
-            'habitat'
+            'cap-shape','cap-surface','cap-color','bruises','odor',
+            'gill-attachment','gill-spacing','gill-size','gill-color',
+            'stalk-shape','stalk-root','stalk-surface-above-ring',
+            'stalk-surface-below-ring','stalk-color-above-ring',
+            'stalk-color-below-ring','veil-type','veil-color',
+            'ring-number','ring-type','spore-print-color',
+            'population','habitat'
         ]
 
+        # -----------------------------
+        # DATAFRAME
+        # -----------------------------
         input_df = pd.DataFrame([features], columns=columns)
 
-        encoded = ohe.transform(input_df).toarray()
+        # -----------------------------
+        # ENCODE
+        # -----------------------------
+        encoded = ohe.transform(input_df)
 
+        # convert sparse → dense safely
+        if hasattr(encoded, "toarray"):
+            encoded = encoded.toarray()
+
+        # -----------------------------
+        # PCA TRANSFORM
+        # -----------------------------
         transformed = pca.transform(encoded)
+        transformed = np.array(transformed, dtype=np.float32)
 
-        transformed = np.asarray(transformed, dtype=np.float32)
-
+        # -----------------------------
+        # PREDICTION
+        # -----------------------------
         prediction = model.predict(transformed, verbose=0)
 
-        return f"""
-        <h2>PREDICTION SUCCESS</h2>
-        <p>Raw Output: {prediction}</p>
-        """
+        probability = float(prediction[0][0]) * 100
+
+        # -----------------------------
+        # RESULT LOGIC
+        # -----------------------------
+        if probability >= 50:
+            result = "☠️ Poisonous Mushroom"
+        else:
+            result = "🍄 Edible Mushroom"
+
+        # -----------------------------
+        # RETURN RESULT
+        # -----------------------------
+        return render_template(
+            "index.html",
+            prediction=result,
+            probability=f"{probability:.2f}%"
+        )
 
     except Exception as e:
-        return f"ERROR: {str(e)}"
+        return f"ERROR IN PREDICT: {str(e)}"
 
 
+# -----------------------------
+# RUN APP (LOCAL ONLY)
+# -----------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)
